@@ -140,15 +140,15 @@ touch src/components/"$1".tsx
 touch src/styles/"$1".scss
 
 #initial component setup
-echo 'import React from "react";
-import "../styles/$1.scss";
+echo "import React from 'react';
+import '../styles/$1.scss';
 
 function $1() {
   return <div></div>;
 }
 
 export default $1;
-' > src/components/"$1".tsx
+" > src/components/"$1".tsx
 }
 
 ##################
