@@ -1,0 +1,174 @@
+#!/bin/bash
+
+#shared
+red=`tput setaf 1`
+green=`tput setaf 2`
+normal=`tput sgr0`
+
+######################
+# Create new project #
+######################
+
+function init(){
+#checking depencies
+function onFail(){
+echo "
+${red}please install $1 first
+"
+exit
+}
+
+echo "
+${green}checking npm :${normal}"
+npm --version || onFail npm
+
+echo "
+${green}checking sed :${normal}"
+sed --version || onFail sed
+ 
+echo "
+${green}checking yarn :${normal}"
+yarn --version || sudo npm i -g yarn
+
+#initializing
+echo "
+${green}welcome to Bash React CLI :)
+${normal}"
+npx create-react-app $1 --template typescript
+cd $1
+
+#Asking about material Ui
+echo "${green}Do you want to install material UI? [y/n]"
+read want
+if [[ $want = y ]]
+then 
+   material_res="@material-ui/core @material-ui/icons"
+else
+   material_res=""
+fi
+
+#adding packages
+echo "${green}adding additional packages
+${normal}" 
+yarn add uuid axios react-router-dom @types/react-router-dom redux react-redux @types/react-redux redux-thunk node-sass $material_res
+
+#modifying app strucutre
+echo "${green}Modifying structure ...
+${normal}"
+mkdir src/components src/styles src/assets src/actions src/reducers
+mv src/App.tsx src/components
+mv src/App.css src/styles/App.scss
+mv src/logo.svg src/assets/logo.svg
+
+#cleaning up imports
+sed -i -e 's/.\/App.css/..\/styles\/App.scss/g' src/components/App.tsx
+sed -i -e 's/.\/logo.svg/..\/assets\/logo.svg/g' src/components/App.tsx
+sed -i -e 's/.\/App/.\/components\/App/g' src/App.test.tsx
+
+#Adding initial redux store
+touch src/reducers/index.ts
+echo 'import { combineReducers } from "redux";
+
+export default combineReducers({
+  replaceMe: () => "dumb boilerplate",
+});' > src/reducers/index.ts
+
+# replacing index.tsx
+rm src/index.tsx
+touch src/index.tsx
+echo 'import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter } from "react-router-dom";
+import { createStore, applyMiddleware } from "redux";
+import { Provider } from "react-redux";
+import thunk from "redux-thunk";
+import reducers from "./reducers";
+import "./index.css";
+import App from "./components/App";
+import * as serviceWorker from "./serviceWorker";
+
+ReactDOM.render(
+  <React.StrictMode>
+    <Provider store={createStore(reducers, applyMiddleware(thunk))}>
+      <App />
+    </Provider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+serviceWorker.unregister();
+' > src/index.tsx
+
+#messages
+echo "
+ ${normal}Now open your text editor eg: ${green}code . ${normal}then run ${green}yarn start ${normal} to get started
+"
+}
+
+##########################
+# Create class component #
+##########################
+
+function generate_class(){
+#create files
+touch src/components/"$1".tsx
+touch src/styles/"$1".scss
+
+#initial component setup
+echo "import React, { Component } from 'react';
+import '../styles/$1.scss';
+
+class $1 extends Component {
+  render() {
+    return <div></div>;
+  }
+}
+
+export default $1;" > src/components/"$1".tsx
+}
+
+###############################
+# Create functional component #
+###############################
+
+function generate_functional(){
+#create files
+touch src/components/"$1".tsx
+touch src/styles/"$1".scss
+
+#initial component setup
+echo 'import React from "react";
+import "../styles/$1.scss";
+
+function $1() {
+  return <div></div>;
+}
+
+export default $1;
+' > src/components/"$1".tsx
+}
+
+##################
+# pick an option #
+##################
+
+if [[ $1 == init ]]
+then
+   init $2
+   exit
+elif [[ $1 == gc ]]
+then
+   generate_class $2
+   exit
+elif [[ $1 == gf ]]
+then
+   generate_functional $2
+   exit
+else
+   echo "${red}please enter a valid option"
+   exit
+fi
+
